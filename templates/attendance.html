@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Registros | Asistencia facial</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  </head>
+  <body class="page-shell">
+    <header class="site-header">
+      <a class="brand" href="{{ url_for('dashboard') }}">Asistencia facial</a>
+      <nav class="site-nav" aria-label="Navegación principal">
+        <a class="nav-link" href="{{ url_for('dashboard') }}">Asistencia</a>
+        <a class="nav-link nav-link--active" href="{{ url_for('attendance_logs') }}">Registros</a>
+        <a class="nav-link" href="{{ url_for('employees') }}">Empleados</a>
+        <form class="logout-form" method="post" action="{{ url_for('logout') }}">
+          <button class="nav-link nav-link--quiet" type="submit">Cerrar sesión</button>
+        </form>
+      </nav>
+    </header>
+
+    <main class="content-grid content-grid--attendance">
+      <section class="intro-section" aria-labelledby="attendance-title">
+        <p class="eyebrow">Historial de marcaciones</p>
+        <h1 id="attendance-title">Registros de entrada y salida</h1>
+        <p class="muted">Consultá las filas del CSV de asistencia sin modificar el archivo original.</p>
+      </section>
+
+      <section class="attendance-section" aria-labelledby="filters-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Consulta</p>
+            <h2 id="filters-title">Filtrar registros</h2>
+          </div>
+          <span class="item-count">{{ logs|length }} registros</span>
+        </div>
+
+        <form class="attendance-filters" method="get" action="{{ url_for('attendance_logs') }}">
+          <div class="field-group">
+            <label for="employee-filter">Empleado</label>
+            <select id="employee-filter" name="employee_id">
+              <option value="">Todos los empleados</option>
+              {% for employee in employees %}
+                <option value="{{ employee.id }}"{% if employee.id == selected_employee %} selected{% endif %}>{{ employee.name }} ({{ employee.id }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="field-group">
+            <label for="event-filter">Tipo de evento</label>
+            <select id="event-filter" name="tipo">
+              <option value="">Entrada y salida</option>
+              {% for event_type in event_types %}
+                <option value="{{ event_type.value }}"{% if event_type.value == selected_type %} selected{% endif %}>{{ event_type.value|capitalize }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="attendance-filter-actions">
+            <button class="button button--primary" type="submit">Aplicar filtros</button>
+            <a class="button button--ghost" href="{{ url_for('attendance_logs') }}">Limpiar</a>
+          </div>
+        </form>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% for category, message in messages %}
+            <div class="alert alert--{{ 'success' if category == 'success' else 'error' }}" role="{{ 'status' if category == 'success' else 'alert' }}">{{ message }}</div>
+          {% endfor %}
+        {% endwith %}
+      </section>
+
+      <section class="attendance-section" aria-labelledby="table-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">CSV actual</p>
+            <h2 id="table-title">Marcaciones</h2>
+          </div>
+        </div>
+
+        {% if logs %}
+          <div class="table-wrapper">
+            <table class="attendance-table">
+              <caption class="visually-hidden">Registros de entrada y salida de empleados</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Empleado</th>
+                  <th scope="col">ID</th>
+                  <th scope="col">Fecha</th>
+                  <th scope="col">Hora</th>
+                  <th scope="col">Evento</th>
+                  <th scope="col">Distancia facial</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for log in logs %}
+                  <tr>
+                    <th scope="row">{{ log.nombre or 'Sin nombre' }}</th>
+                    <td class="table-mono">{{ log.id_empleado }}</td>
+                    <td>{{ log.fecha }}</td>
+                    <td>{{ log.hora }}</td>
+                    <td><span class="event-badge event-badge--{{ log.tipo }}">{{ log.tipo|capitalize }}</span></td>
+                    <td class="table-mono">{{ log.distancia or '—' }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <span class="empty-state__icon" aria-hidden="true">○</span>
+            <h3>{% if selected_employee or selected_type %}No hay registros para esos filtros{% else %}Todavía no hay marcaciones{% endif %}</h3>
+            <p class="muted">Cuando se registre una entrada o salida, va a aparecer acá.</p>
+          </div>
+        {% endif %}
+      </section>
+    </main>
+  </body>
+</html>

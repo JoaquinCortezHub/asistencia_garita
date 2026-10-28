@@ -1,0 +1,3 @@
+# Employee photographs are local biometric data and must not be committed.
+*
+!.gitignore

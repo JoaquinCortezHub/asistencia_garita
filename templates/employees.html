@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Empleados | Asistencia facial</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="/static/app.js" defer></script>
+  </head>
+  <body class="page-shell">
+    <header class="site-header">
+      <a class="brand" href="/">Asistencia facial</a>
+      <nav class="site-nav" aria-label="Navegación principal">
+        <a class="nav-link" href="/">Asistencia</a>
+        <a class="nav-link" href="/attendance">Registros</a>
+        <a class="nav-link nav-link--active" href="/employees">Empleados</a>
+        <form class="logout-form" method="post" action="/logout">
+          <button class="nav-link nav-link--quiet" type="submit">Cerrar sesión</button>
+        </form>
+      </nav>
+    </header>
+
+    <main class="content-grid content-grid--employees">
+      <section class="intro-section" aria-labelledby="employees-title">
+        <p class="eyebrow">Directorio protegido</p>
+        <h1 id="employees-title">Empleados</h1>
+        <p class="muted">Administrá las imágenes utilizadas para reconocer rostros. Los registros históricos no se eliminan al quitar una imagen.</p>
+      </section>
+
+      <section class="upload-card" aria-labelledby="upload-title">
+        <div>
+          <p class="eyebrow">Nuevo registro</p>
+          <h2 id="upload-title">Cargar empleado</h2>
+          <p class="muted">Usá una imagen clara con exactamente un rostro.</p>
+        </div>
+        <form class="upload-form" method="post" action="/employees/upload" enctype="multipart/form-data">
+          <div class="field-group">
+            <label for="employee-name">Nombre completo</label>
+            <input id="employee-name" name="name" type="text" autocomplete="name" required>
+          </div>
+          <div class="field-group">
+            <label for="employee-image">Imagen</label>
+            <input id="employee-image" name="image" type="file" accept="image/jpeg,image/png,image/webp" required>
+          </div>
+          <button class="button button--primary" type="submit">Cargar empleado</button>
+        </form>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% for category, message in messages %}
+            <div class="alert alert--{{ 'success' if category == 'success' else 'error' }}" role="{{ 'status' if category == 'success' else 'alert' }}">{{ message }}</div>
+          {% endfor %}
+        {% endwith %}
+      </section>
+
+      <section class="employee-section" aria-labelledby="gallery-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Galería</p>
+            <h2 id="gallery-title">Imágenes registradas</h2>
+          </div>
+          <span class="item-count">{{ employees|length }} empleados</span>
+        </div>
+
+        {% if employees %}
+          <div class="employee-grid">
+            {% for employee in employees %}
+              {% set employee_name = employee.name|default(employee.nombre, true)|default('Empleado', true) %}
+              {% set employee_id = employee.id|default(employee.id_empleado, true) %}
+              {% set image_filename = employee.filename|default(employee.image_filename, true)|default(employee.ruta_imagen.name, true)|default(employee_name ~ '.jpg', true) %}
+              <article class="employee-card">
+                <img class="employee-card__image" src="/employees/images/{{ image_filename|urlencode }}" alt="Foto de {{ employee_name }}" loading="lazy">
+                <div class="employee-card__body">
+                  <h3>{{ employee_name }}</h3>
+                  <p class="muted">ID: {{ employee_id }}</p>
+                  <form class="delete-form" method="post" action="/employees/{{ employee_id|urlencode }}/delete" data-delete-form data-employee-name="{{ employee_name }}">
+                    <button class="button button--danger button--full" type="submit">Eliminar empleado</button>
+                  </form>
+                </div>
+              </article>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <span class="empty-state__icon" aria-hidden="true">○</span>
+            <h3>No hay empleados cargados</h3>
+            <p class="muted">Cargá la primera imagen para habilitar el reconocimiento.</p>
+          </div>
+        {% endif %}
+      </section>
+    </main>
+  </body>
+</html>
